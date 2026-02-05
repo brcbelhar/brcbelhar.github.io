@@ -1,1 +1,86 @@
-for
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Data Management Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="form-card">
+    <h2>BRC BELHAR / Teacher Data Management Portal</h2>
+    
+    <div class="search-box">
+        <label>Already submitted? Enter Adhaar to edit your data:</label>
+        <div class="search-controls">
+            <input type="text" id="searchAdhaar" placeholder="12 Digit Adhaar Number" maxlength="12">
+            <button type="button" onclick="searchData()">Find Record</button>
+        </div>
+        <div id="statusMessage"></div>
+    </div>
+
+    <form id="dataForm">
+        <h3>1. Personal Details</h3>
+        <div class="grid">
+            <div><label>Full Name</label><input type="text" name="name" required></div>
+            <div><label>Father's Name</label><input type="text" name="father_name" required></div>
+            <div><label>Date of Birth</label><input type="date" name="dob" required></div>
+            <div><label>Mobile (10 Digits)</label><input type="text" name="mobile" pattern="^[6-9][0-9]{9}$" maxlength="10" inputmode="numeric" required></div>
+            <div><label>Email</label><input type="email" name="email" required></div>
+            <div><label>Gender</label><select name="gender" required><option value="">--Select--</option><option>Male</option><option>Female</option></select></div>
+        </div>
+        <label>Adhaar Number (12 Digits)</label>
+        <input type="text" name="adhaar" id="formAdhaar" pattern="^[1-9][0-9]{11}$" maxlength="12" inputmode="numeric" required>
+
+        <h3>2. School & Service Details</h3>
+        <label>School Name</label><input type="text" name="school_name" required>
+        <div class="grid">
+            <div><label>UDISE Code</label><input type="text" name="udise" pattern="^102328[0-9]{5}$" maxlength="11" inputmode="numeric" placeholder="102328*****" required></div>
+            <div><label>Date of Joining</label><input type="date" name="doj" required></div>
+            <div>
+                <label>Teacher Type</label>
+                <select name="teacher_type" required>
+                    <option value="">--Select--</option>
+                    <option>Tre</option><option>Niyojit</option><option>Vishisht</option>
+                    <option>Niymit</option><option>HT</option><option>HM</option><option>Assistant HM / HT</option>
+                </select>
+            </div>
+            <div>
+                <label>Class</label>
+                <select name="class_level" required>
+                    <option value="">--Select--</option>
+                    <option>1 to 5</option><option>6 to 8</option><option>9 to 10</option><option>11 to 12</option>
+                </select>
+            </div>
+        </div>
+        <label>Subject</label><input type="text" name="subject" required>
+
+        <h3>3. Bank Account Details</h3>
+        <div class="grid">
+            <div style="grid-column: span 2;">
+                <label>Account Number (Numbers only)</label>
+                <input type="text" name="account_number" pattern="\d+" required>
+            </div>
+            <div><label>Bank Name</label><input type="text" name="bank_name" required></div>
+            <div><label>IFSC Code</label><input type="text" name="ifsc" pattern="^[A-Z]{4}0[A-Z0-9]{6}$" maxlength="11" placeholder="e.g., SBIN0001234" required></div>
+        </div>
+
+        <h3>4. Address Information</h3>
+        <div class="grid">
+            <div><label>Village / Town</label><input type="text" name="village" required></div>
+            <div><label>Panchayat / Municipality</label><input type="text" name="panchayat" required></div>
+            <div><label>Block</label><input type="text" name="block" required></div>
+            <div><label>District</label><input type="text" name="district" required></div>
+            <div><label>State</label><input type="text" name="state" value="Bihar" required></div>
+            <div><label>Pin Code</label><input type="text" name="pincode" pattern="^[1-9][0-9]{5}$" maxlength="6" inputmode="numeric" required></div>
+        </div>
+
+        <button type="submit" id="submitBtn">Submit Data Securely</button>
+    </form>
+    
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>

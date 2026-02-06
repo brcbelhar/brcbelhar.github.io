@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +6,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Data Management Portal</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://script.google.com">
+    <link rel="preconnect" href="https://script.googleusercontent.com">
 </head>
+<style>
+:root { --blue: #004a99; --light: #f8f9fa; --border: #ced4da; }
+body { font-family: 'Segoe UI', sans-serif; background: #eef2f3; display: flex; justify-content: center; padding: 20px; }
+.form-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
+h2 { color: var(--blue); text-align: center; border-bottom: 2px solid var(--blue); padding-bottom: 10px; }
+h3 { background: var(--light); padding: 8px; font-size: 15px; color: #444; border-left: 4px solid var(--blue); margin-top: 25px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+label { display: block; margin-top: 10px; font-size: 13px; font-weight: bold; }
+input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
+/* Visually transform text inputs to uppercase */
+input[type="text"] { text-transform: uppercase; }
+input[type="text"]::placeholder { text-transform: none; } /* Keep placeholders as is */
+.search-box { background: #fff9e6; border: 1px dashed #ffcc00; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+.search-controls { display: flex; gap: 10px; margin-top: 8px; }
+.search-controls input { flex: 2; }
+.search-controls button { flex: 1; margin: 0; background: #555; font-size: 13px; }
+button { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 5px; margin-top: 25px; cursor: pointer; font-weight: bold; }
+button:hover { opacity: 0.9; }
+#statusMessage { text-align: center; margin-top: 15px; font-weight: bold; font-size: 14px; }
+
+/* Loader and Popup Styles */
+.loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; }
+.loader { border: 8px solid #f3f3f3; border-top: 8px solid var(--blue); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; display: none; justify-content: center; align-items: center; }
+.popup-content { background: white; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 400px; }
+.popup-content h3 { margin-top: 0; border: none; background: none; padding: 0; color: var(--blue); font-size: 24px; }
+.popup-content p { font-size: 16px; color: #333; margin: 15px 0 25px; }
+.popup-content button { margin-top: 0; width: auto; padding: 10px 30px; }
+</style>
 <body>
 
 <div class="form-card">
@@ -28,7 +62,13 @@
             <div><label>Date of Birth</label><input type="date" name="dob" required></div>
             <div><label>Mobile (10 Digits)</label><input type="text" name="mobile" pattern="^[6-9][0-9]{9}$" maxlength="10" inputmode="numeric" required></div>
             <div><label>Email</label><input type="email" name="email" required></div>
-            <div><label>Gender</label><select name="gender" required><option value="">--Select--</option><option>Male</option><option>Female</option></select></div>
+            <div>
+                <label>Gender</label>
+                <div style="display: flex; gap: 20px; padding: 10px 0;">
+                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="gender" value="Male" required style="width: auto; margin-right: 5px;"> Male</label>
+                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="gender" value="Female" required style="width: auto; margin-right: 5px;"> Female</label>
+                </div>
+            </div>
         </div>
         <label>Adhaar Number (12 Digits)</label>
         <input type="text" name="adhaar" id="formAdhaar" pattern="^[1-9][0-9]{11}$" maxlength="12" inputmode="numeric" required>
@@ -48,10 +88,12 @@
             </div>
             <div>
                 <label>Class</label>
-                <select name="class_level" required>
-                    <option value="">--Select--</option>
-                    <option>1 to 5</option><option>6 to 8</option><option>9 to 10</option><option>11 to 12</option>
-                </select>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; padding: 10px 0;">
+                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="1 to 5" required style="width: auto; margin-right: 5px;"> 1 to 5</label>
+                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="6 to 8" required style="width: auto; margin-right: 5px;"> 6 to 8</label>
+                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="9 to 10" required style="width: auto; margin-right: 5px;"> 9 to 10</label>
+                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="11 to 12" required style="width: auto; margin-right: 5px;"> 11 to 12</label>
+                </div>
             </div>
         </div>
         <label>Subject</label><input type="text" name="subject" required>
@@ -60,7 +102,7 @@
         <div class="grid">
             <div style="grid-column: span 2;">
                 <label>Account Number (Numbers only)</label>
-                <input type="text" name="account_number" pattern="\d+" required>
+                <input type="text" name="account_number" inputmode="numeric" required>
             </div>
             <div><label>Bank Name</label><input type="text" name="bank_name" required></div>
             <div><label>IFSC Code</label><input type="text" name="ifsc" placeholder="e.g., SBIN0001234" required></div>
@@ -79,6 +121,20 @@
         <button type="submit" id="submitBtn">Submit Data Securely</button>
     </form>
     
+</div>
+
+<!-- Loader -->
+<div id="loader" class="loader-overlay">
+    <div class="loader"></div>
+</div>
+
+<!-- Success Popup -->
+<div id="successPopup" class="popup-overlay">
+    <div class="popup-content">
+        <h3>Success!</h3>
+        <p>Data submitted successfully.</p>
+        <button id="closePopupBtn">OK</button>
+    </div>
 </div>
 
 <script src="scripts.js"></script>

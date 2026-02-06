@@ -1,1 +1,114 @@
-const scriptURL="https://script.google.com/macros/s/AKfycbxLCb71EVu0SHnRxugM2RF_22ZhppyoP5jngOT7en4fHNTLXJ_RggvAY4TRcG1ADXf2/exec",form=document.getElementById("dataForm"),btn=document.getElementById("submitBtn"),status=document.getElementById("statusMessage"),loader=document.getElementById("loader"),popup=document.getElementById("successPopup"),closePopupBtn=document.getElementById("closePopupBtn"),popupTitle=popup.querySelector("h3"),popupMessage=popup.querySelector("p");function searchData(){const e=document.getElementById("searchAdhaar").value;12===e.length?(status.innerText="Searching...",status.style.color="blue",loader.style.display="flex",fetch(`${scriptURL}?action=read&adhaar=${e}`).then((e=>e.json())).then((e=>{if(loader.style.display="none","found"===e.result){const t=e.row;form.name.value=t[1],form.father_name.value=t[2],form.dob.value=formatDate(t[3]),form.adhaar.value=t[4],form.mobile.value=t[5],form.email.value=t[6],form.gender.value=t[7],form.school_name.value=t[8],form.udise.value=t[9],form.teacher_type.value=t[10],form.class_level.value=t[11],form.subject.value=t[12],form.doj.value=formatDate(t[13]),form.account_number.value=t[14],form.bank_name.value=t[15],form.ifsc.value=t[16],form.village.value=t[17],form.panchayat.value=t[18],form.block.value=t[19],form.district.value=t[20],form.state.value=t[21],form.pincode.value=t[22],status.innerText="Data found! You can now edit and re-submit.",status.style.color="green",popupTitle.innerText="Record Found",popupMessage.innerText="Data found! You can now edit and re-submit.",popup.style.display="flex"}else status.innerText="No record found. Please fill as new.",status.style.color="red",popupTitle.innerText="No Record",popupMessage.innerText="No record found. Please fill as new.",popup.style.display="flex"})).catch((e=>{loader.style.display="none",alert("Error searching data.")}))):alert("Enter 12-digit Adhaar")}function formatDate(e){if(!e)return"";return new Date(e).toISOString().split("T")[0]}form.addEventListener("submit",(e=>{e.preventDefault();form.querySelectorAll('input[type="text"]').forEach((e=>{e.value=e.value.toUpperCase()})),btn.disabled=!0,btn.innerText="Saving...",loader.style.display="flex",fetch(scriptURL,{method:"POST",body:new FormData(form),keepalive:!0}).then((e=>{loader.style.display="none",popupTitle.innerText="Success!",popupMessage.innerText="Data submitted successfully.",popup.style.display="flex",form.reset(),btn.disabled=!1,btn.innerText="Submit Data Securely"})).catch((e=>{loader.style.display="none",status.innerText="Error saving data.",btn.disabled=!1}))})),closePopupBtn.addEventListener("click",(()=>{popup.style.display="none"}));
+const scriptURL = '/api/handler';
+const form = document.getElementById('dataForm');
+const btn = document.getElementById('submitBtn');
+const status = document.getElementById('statusMessage');
+const loader = document.getElementById('loader');
+const popup = document.getElementById('successPopup');
+const closePopupBtn = document.getElementById('closePopupBtn');
+const popupTitle = popup.querySelector('h3');
+const popupMessage = popup.querySelector('p');
+
+function searchData() {
+    const adhaar = document.getElementById('searchAdhaar').value;
+    if (adhaar.length !== 12) { alert("Enter 12-digit Adhaar"); return; }
+
+    status.innerText = "Searching...";
+    status.style.color = "blue";
+    loader.style.display = 'flex';
+
+    fetch(`${scriptURL}?action=read&adhaar=${adhaar}`)
+        .then(res => res.json())
+        .then(data => {
+            loader.style.display = 'none';
+            if (data.result === "found") {
+                const r = data.row;
+                form.name.value = r[1];
+                form.father_name.value = r[2];
+                form.dob.value = formatDate(r[3]);
+                form.adhaar.value = r[4];
+                form.mobile.value = r[5];
+                form.email.value = r[6];
+                form.gender.value = r[7];
+                form.school_name.value = r[8];
+                form.udise.value = r[9];
+                form.teacher_type.value = r[10];
+                form.class_level.value = r[11];
+                form.subject.value = r[12];
+                form.doj.value = formatDate(r[13]);
+                form.account_number.value = r[14];
+                form.bank_name.value = r[15];
+                form.ifsc.value = r[16];
+                form.village.value = r[17];
+                form.panchayat.value = r[18];
+                form.block.value = r[19];
+                form.district.value = r[20];
+                form.state.value = r[21];
+                form.pincode.value = r[22];
+                status.innerText = "Data found! You can now edit and re-submit.";
+                status.style.color = "green";
+                popupTitle.innerText = "Record Found";
+                popupMessage.innerText = "Data found! You can now edit and re-submit.";
+                popup.style.display = 'flex';
+            } else {
+                status.innerText = "No record found. Please fill as new.";
+                status.style.color = "red";
+                popupTitle.innerText = "No Record";
+                popupMessage.innerText = "No record found. Please fill as new.";
+                popup.style.display = 'flex';
+            }
+        })
+        .catch(err => {
+            loader.style.display = 'none';
+            alert("Error searching data.");
+        });
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    const localDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000));
+    return localDate.toISOString().split('T')[0];
+}
+
+form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    // Convert text input values to uppercase before submission
+    const textInputs = form.querySelectorAll('input[type="text"]');
+    textInputs.forEach(input => {
+        input.value = input.value.toUpperCase();
+    });
+
+    btn.disabled = true;
+    btn.innerText = "Saving...";
+    loader.style.display = 'flex';
+
+    // Convert FormData to a plain object and send as JSON
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    fetch(scriptURL, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data), 
+        keepalive: true 
+    })
+        .then(res => {
+            loader.style.display = 'none';
+            popupTitle.innerText = "Success!";
+            popupMessage.innerText = "Data submitted successfully.";
+            popup.style.display = 'flex';
+            form.reset();
+            btn.disabled = false;
+            btn.innerText = "Submit Data Securely";
+        })
+        .catch(err => {
+            loader.style.display = 'none';
+            status.innerText = "Error saving data.";
+            btn.disabled = false;
+        });
+});
+
+closePopupBtn.addEventListener('click', () => {
+    popup.style.display = 'none';
+});

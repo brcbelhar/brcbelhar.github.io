@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Data Management Portal</title>
+    <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://script.google.com">
     <link rel="preconnect" href="https://script.googleusercontent.com">
 </head>
@@ -40,6 +41,8 @@ button:hover { opacity: 0.9; }
 .popup-content button { margin-top: 0; width: auto; padding: 10px 30px; }
 </style>
 <body>
+
+<button onclick="window.location.href='udise.html'" style="position: absolute; top: 20px; right: 20px; width: auto; margin: 0; padding: 10px 20px;">UDISE</button>
 
 <div class="form-card">
     <h2>BRC BELHAR / Teacher Data Management Portal</h2>
@@ -101,7 +104,7 @@ button:hover { opacity: 0.9; }
         <div class="grid">
             <div style="grid-column: span 2;">
                 <label>Account Number (Numbers only)</label>
-                <input type="text" name="account_number" inputmode="numeric" required>
+                <input type="text" name="account_number" pattern="\d+" required>
             </div>
             <div><label>Bank Name</label><input type="text" name="bank_name" required></div>
             <div><label>IFSC Code</label><input type="text" name="ifsc" placeholder="e.g., SBIN0001234" required></div>

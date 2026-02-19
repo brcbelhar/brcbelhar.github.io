@@ -1,4 +1,4 @@
-const scriptURL = 'https://script.google.com/macros/s/AKfycbwryzOsBQioofy2Ls91Vcg6ADGx1pGoH2_w7OBpRR7Yww0iXFdyI8eCWAf23gWXTijj/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbxLCb71EVu0SHnRxugM2RF_22ZhppyoP5jngOT7en4fHNTLXJ_RggvAY4TRcG1ADXf2/exec';
 const form = document.getElementById('dataForm');
 const btn = document.getElementById('submitBtn');
 const status = document.getElementById('statusMessage');
@@ -7,6 +7,40 @@ const popup = document.getElementById('successPopup');
 const closePopupBtn = document.getElementById('closePopupBtn');
 const popupTitle = popup.querySelector('h3');
 const popupMessage = popup.querySelector('p');
+
+// View elements
+const initialView = document.getElementById('initialView');
+const formView = document.getElementById('formView');
+const addNewBtn = document.getElementById('addNewBtn');
+const backToSearchBtn = document.getElementById('backToSearchBtn');
+
+// PAN popup elements
+const panPopup = document.getElementById('panPopup');
+const panInput = document.getElementById('panInput');
+const panTeacherName = document.getElementById('panTeacherName');
+const savePanBtn = document.getElementById('savePanBtn');
+const cancelPanBtn = document.getElementById('cancelPanBtn');
+
+let currentEditAadhaar = null; // Store Aadhaar of teacher being edited in PAN popup
+
+// Toggle functions
+function showInitialView() {
+    initialView.classList.remove('hidden');
+    formView.classList.add('hidden');
+    // Clear any search results or messages
+    document.getElementById('udiseResultList').innerHTML = '';
+    status.innerText = '';
+}
+
+function showFormView() {
+    initialView.classList.add('hidden');
+    formView.classList.remove('hidden');
+    // Optionally reset the form
+    form.reset();
+}
+
+addNewBtn.addEventListener('click', showFormView);
+backToSearchBtn.addEventListener('click', showInitialView);
 
 // Search by Aadhaar
 function searchData() {
@@ -24,6 +58,8 @@ function searchData() {
             if (data.result === "found") {
                 const r = data.row;
                 populateFormFromRow(r);
+                // Automatically switch to form view
+                showFormView();
                 status.innerText = "Data found! You can now edit and re-submit.";
                 status.style.color = "green";
                 popupTitle.innerText = "Record Found";
@@ -66,12 +102,11 @@ function searchByUDISE() {
                     const name = row[1] || "Unknown";
                     html += `<li style="display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid #eee;">
                         <span>${name}</span>
-                        <button type="button" style="width:auto; padding:5px 15px; margin:0; background:#28a745;" onclick="editRecordFromRow(${index})">Edit</button>
+                        <button type="button" style="width:auto; padding:5px 15px; margin:0; background:#28a745;" onclick="openPanPopup('${row[4]}', '${name}')">Edit PAN</button>
                     </li>`;
                 });
                 html += '</ul>';
                 listDiv.innerHTML = html;
-                window.udiseSearchRows = data.rows; // store globally
                 status.innerText = `${data.rows.length} record(s) found.`;
                 status.style.color = "green";
             } else {
@@ -86,14 +121,58 @@ function searchByUDISE() {
         });
 }
 
-// Edit a specific record from UDISE list
-function editRecordFromRow(index) {
-    const rows = window.udiseSearchRows;
-    if (!rows || index >= rows.length) return;
-    const row = rows[index];
-    populateFormFromRow(row);
-    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+// Open PAN popup for a specific teacher
+function openPanPopup(adhaar, name) {
+    currentEditAadhaar = adhaar;
+    panTeacherName.innerText = name;
+    panInput.value = ''; // Clear previous input
+    panPopup.style.display = 'flex';
 }
+
+// Save PAN update
+function savePAN() {
+    const newPan = panInput.value.trim().toUpperCase();
+    if (!newPan.match(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/)) {
+        alert("Please enter a valid PAN (5 letters, 4 numbers, 1 letter)");
+        return;
+    }
+    if (!currentEditAadhaar) {
+        alert("No teacher selected.");
+        return;
+    }
+
+    loader.style.display = 'flex';
+    const formData = new URLSearchParams();
+    formData.append('action', 'updatePAN');
+    formData.append('adhaar', currentEditAadhaar);
+    formData.append('pan', newPan);
+
+    fetch(scriptURL, { method: 'POST', body: formData })
+        .then(res => res.text())
+        .then(response => {
+            loader.style.display = 'none';
+            if (response === "UPDATED" || response === "SUCCESS") {
+                alert("PAN updated successfully.");
+                panPopup.style.display = 'none';
+            } else {
+                alert("Error updating PAN.");
+            }
+        })
+        .catch(err => {
+            loader.style.display = 'none';
+            alert("Error updating PAN.");
+        });
+}
+
+// Cancel PAN popup
+function cancelPan() {
+    panPopup.style.display = 'none';
+    currentEditAadhaar = null;
+}
+
+// Event listeners for PAN popup buttons
+savePanBtn.addEventListener('click', savePAN);
+cancelPanBtn.addEventListener('click', cancelPan);
 
 // Fill form with row data (indices updated for PAN at 23)
 function populateFormFromRow(r) {
@@ -143,8 +222,6 @@ function populateFormFromRow(r) {
     form.district.value = r[20] || '';
     form.state.value = r[21] || '';
     form.pincode.value = r[22] || '';
-
-    // NEW: PAN at index 23
     form.pan.value = r[23] || '';
 
     status.innerText = "Record loaded. You can edit and re-submit.";
@@ -180,6 +257,8 @@ form.addEventListener('submit', e => {
             form.reset();
             btn.disabled = false;
             btn.innerText = "Submit Data Securely";
+            // After successful submission, go back to initial view
+            showInitialView();
         })
         .catch(err => {
             loader.style.display = 'none';
@@ -191,3 +270,6 @@ form.addEventListener('submit', e => {
 closePopupBtn.addEventListener('click', () => {
     popup.style.display = 'none';
 });
+
+// Initialize: ensure form is hidden on page load
+showInitialView();

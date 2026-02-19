@@ -1,4 +1,4 @@
-const scriptURL = 'https://script.google.com/macros/s/AKfycbxLCb71EVu0SHnRxugM2RF_22ZhppyoP5jngOT7en4fHNTLXJ_RggvAY4TRcG1ADXf2/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbwryzOsBQioofy2Ls91Vcg6ADGx1pGoH2_w7OBpRR7Yww0iXFdyI8eCWAf23gWXTijj/exec';
 const form = document.getElementById('dataForm');
 const btn = document.getElementById('submitBtn');
 const status = document.getElementById('statusMessage');
@@ -8,7 +8,7 @@ const closePopupBtn = document.getElementById('closePopupBtn');
 const popupTitle = popup.querySelector('h3');
 const popupMessage = popup.querySelector('p');
 
-// Search by Aadhaar (existing)
+// Search by Aadhaar
 function searchData() {
     const adhaar = document.getElementById('searchAdhaar').value;
     if (adhaar.length !== 12) { alert("Enter 12-digit Adhaar"); return; }
@@ -43,7 +43,7 @@ function searchData() {
         });
 }
 
-// NEW: Search by UDISE
+// Search by UDISE
 function searchByUDISE() {
     const udise = document.getElementById('searchUdise').value;
     if (!udise.match(/^102328[0-9]{5}$/)) {
@@ -71,8 +71,7 @@ function searchByUDISE() {
                 });
                 html += '</ul>';
                 listDiv.innerHTML = html;
-                // Store rows globally so edit buttons can access them
-                window.udiseSearchRows = data.rows;
+                window.udiseSearchRows = data.rows; // store globally
                 status.innerText = `${data.rows.length} record(s) found.`;
                 status.style.color = "green";
             } else {
@@ -87,17 +86,16 @@ function searchByUDISE() {
         });
 }
 
-// NEW: Edit a specific record from the UDISE result list
+// Edit a specific record from UDISE list
 function editRecordFromRow(index) {
     const rows = window.udiseSearchRows;
     if (!rows || index >= rows.length) return;
     const row = rows[index];
     populateFormFromRow(row);
-    // Scroll to the form
     document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Helper to fill the form with row data (columns: index 1 = name, 2 = father_name, etc.)
+// Fill form with row data (indices updated for PAN at 23)
 function populateFormFromRow(r) {
     form.name.value = r[1] || '';
     form.father_name.value = r[2] || '';
@@ -146,6 +144,9 @@ function populateFormFromRow(r) {
     form.state.value = r[21] || '';
     form.pincode.value = r[22] || '';
 
+    // NEW: PAN at index 23
+    form.pan.value = r[23] || '';
+
     status.innerText = "Record loaded. You can edit and re-submit.";
     status.style.color = "green";
 }
@@ -160,7 +161,7 @@ function formatDate(dateStr) {
 form.addEventListener('submit', e => {
     e.preventDefault();
 
-    // Convert text input values to uppercase before submission
+    // Convert text inputs to uppercase (PAN included)
     const textInputs = form.querySelectorAll('input[type="text"]');
     textInputs.forEach(input => {
         input.value = input.value.toUpperCase();

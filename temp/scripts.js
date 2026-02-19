@@ -1,4 +1,4 @@
-const scriptURL = 'https://script.google.com/macros/s/AKfycbxLCb71EVu0SHnRxugM2RF_22ZhppyoP5jngOT7en4fHNTLXJ_RggvAY4TRcG1ADXf2/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbxnzDVlgZBTCRsfu5DdQhqUDIzPqlwgV0gJ0iJ3jk5NBGqONb4FW9LZoD_alsx4Zrag/exec';
 const form = document.getElementById('dataForm');
 const btn = document.getElementById('submitBtn');
 const status = document.getElementById('statusMessage');

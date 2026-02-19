@@ -38,102 +38,117 @@ button:hover { opacity: 0.9; }
 .popup-content h3 { margin-top: 0; border: none; background: none; padding: 0; color: var(--blue); font-size: 24px; }
 .popup-content p { font-size: 16px; color: #333; margin: 15px 0 25px; }
 .popup-content button { margin-top: 0; width: auto; padding: 10px 30px; }
+
+/* Toggle visibility classes */
+.hidden { display: none; }
 </style>
 <body>
 
 <div class="form-card">
     <h2>BRC BELHAR / Teacher Data Management Portal</h2>
-    
-    <!-- Search by Aadhaar -->
-    <div class="search-box">
-        <label>Already submitted? Enter Adhaar to edit your data:</label>
-        <div class="search-controls">
-            <input type="text" id="searchAdhaar" placeholder="12 Digit Adhaar Number" inputmode="numeric" maxlength="12">
-            <button type="button" onclick="searchData()">Find Record</button>
+
+    <!-- Initial View: Search + Add New button -->
+    <div id="initialView">
+        <!-- Search by Aadhaar -->
+        <div class="search-box">
+            <label>Already submitted? Enter Adhaar to edit your data:</label>
+            <div class="search-controls">
+                <input type="text" id="searchAdhaar" placeholder="12 Digit Adhaar Number" inputmode="numeric" maxlength="12">
+                <button type="button" onclick="searchData()">Find Record</button>
+            </div>
+            <div id="statusMessage"></div>
         </div>
-        <div id="statusMessage"></div>
+
+        <!-- Search by UDISE -->
+        <div class="search-box" style="margin-top:20px;">
+            <label>Search by UDISE Code to list all teachers:</label>
+            <div class="search-controls">
+                <input type="text" id="searchUdise" placeholder="11 Digit UDISE Code (102328...)" maxlength="11" inputmode="numeric">
+                <button type="button" onclick="searchByUDISE()">Search by UDISE</button>
+            </div>
+            <div id="udiseResultList" style="margin-top:15px; max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px; border-radius:4px; background:#fff;"></div>
+        </div>
+
+        <!-- Add New Button -->
+        <button type="button" id="addNewBtn" style="background:#28a745; margin-top:10px;">+ Add New Teacher</button>
     </div>
 
-    <!-- Search by UDISE -->
-    <div class="search-box" style="margin-top:20px;">
-        <label>Search by UDISE Code to list all teachers:</label>
-        <div class="search-controls">
-            <input type="text" id="searchUdise" placeholder="11 Digit UDISE Code (102328...)" maxlength="11" inputmode="numeric">
-            <button type="button" onclick="searchByUDISE()">Search by UDISE</button>
-        </div>
-        <div id="udiseResultList" style="margin-top:15px; max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px; border-radius:4px; background:#fff;"></div>
+    <!-- Form View (hidden initially) -->
+    <div id="formView" class="hidden">
+        <!-- Back button -->
+        <button type="button" id="backToSearchBtn" style="background:#6c757d; margin-top:0; margin-bottom:20px;">← Back to Search</button>
+
+        <form id="dataForm">
+            <h3>1. Personal Details</h3>
+            <div class="grid">
+                <div><label>Full Name</label><input type="text" name="name" required></div>
+                <div><label>Father's Name</label><input type="text" name="father_name" required></div>
+                <div><label>Date of Birth</label><input type="date" name="dob" required></div>
+                <div><label>Mobile (10 Digits)</label><input type="text" name="mobile" pattern="^[6-9][0-9]{9}$" maxlength="10" inputmode="numeric" required></div>
+                <div><label>Email</label><input type="email" name="email" required></div>
+                <div>
+                    <label>Gender</label>
+                    <div style="display: flex; gap: 20px; padding: 10px 0;">
+                        <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="gender" value="Male" required style="width: auto; margin-right: 5px;"> Male</label>
+                        <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="gender" value="Female" required style="width: auto; margin-right: 5px;"> Female</label>
+                    </div>
+                </div>
+            </div>
+            <label>Adhaar Number (12 Digits)</label>
+            <input type="text" name="adhaar" id="formAdhaar" pattern="^[1-9][0-9]{11}$" maxlength="12" inputmode="numeric" required>
+
+            <!-- PAN Field -->
+            <label>PAN (10 Characters, e.g., ABCDE1234F)</label>
+            <input type="text" name="pan" id="pan" pattern="^[A-Z]{5}[0-9]{4}[A-Z]{1}$" maxlength="10" placeholder="ABCDE1234F" title="Please enter a valid PAN (5 letters, 4 numbers, 1 letter)">
+
+            <h3>2. School & Service Details</h3>
+            <label>School Name</label><input type="text" name="school_name" required>
+            <div class="grid">
+                <div><label>UDISE Code</label><input type="text" name="udise" pattern="^102328[0-9]{5}$" maxlength="11" inputmode="numeric" placeholder="102328*****" required></div>
+                <div><label>Date of Joining</label><input type="date" name="doj" required></div>
+                <div>
+                    <label>Teacher Type</label>
+                    <select name="teacher_type" required>
+                        <option value="">--Select--</option>
+                        <option>Tre</option><option>Niyojit</option><option>Vishisht</option>
+                        <option>Niymit</option><option>HT</option><option>HM</option><option>Assistant HM / HT</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Class</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; padding: 10px 0;">
+                        <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="1 to 5" required style="width: auto; margin-right: 5px;"> 1 to 5</label>
+                        <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="6 to 8" required style="width: auto; margin-right: 5px;"> 6 to 8</label>
+                        <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="9 to 10" required style="width: auto; margin-right: 5px;"> 9 to 10</label>
+                        <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="11 to 12" required style="width: auto; margin-right: 5px;"> 11 to 12</label>
+                    </div>
+                </div>
+            </div>
+            <label>Subject</label><input type="text" name="subject" required>
+
+            <h3>3. Bank Account Details</h3>
+            <div class="grid">
+                <div style="grid-column: span 2;">
+                    <label>Account Number (Numbers only)</label>
+                    <input type="text" name="account_number" inputmode="numeric" required>
+                </div>
+                <div><label>Bank Name</label><input type="text" name="bank_name" required></div>
+                <div><label>IFSC Code</label><input type="text" name="ifsc" placeholder="e.g., SBIN0001234" required></div>
+            </div>
+
+            <h3>4. Permanent Address Information</h3>
+            <div class="grid">
+                <div><label>Village / Town</label><input type="text" name="village" required></div>
+                <div><label>Panchayat / Municipality</label><input type="text" name="panchayat" required></div>
+                <div><label>Block</label><input type="text" name="block" required></div>
+                <div><label>District</label><input type="text" name="district" required></div>
+                <div><label>State</label><input type="text" name="state" value="Bihar" required></div>
+                <div><label>Pin Code</label><input type="text" name="pincode" pattern="^[1-9][0-9]{5}$" maxlength="6" inputmode="numeric" required></div>
+            </div>
+
+            <button type="submit" id="submitBtn">Submit Data Securely</button>
+        </form>
     </div>
-
-    <form id="dataForm">
-        <h3>1. Personal Details</h3>
-        <div class="grid">
-            <div><label>Full Name</label><input type="text" name="name" required></div>
-            <div><label>Father's Name</label><input type="text" name="father_name" required></div>
-            <div><label>Date of Birth</label><input type="date" name="dob" required></div>
-            <div><label>Mobile (10 Digits)</label><input type="text" name="mobile" pattern="^[6-9][0-9]{9}$" maxlength="10" inputmode="numeric" required></div>
-            <div><label>Email</label><input type="email" name="email" required></div>
-            <div>
-                <label>Gender</label>
-                <div style="display: flex; gap: 20px; padding: 10px 0;">
-                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="gender" value="Male" required style="width: auto; margin-right: 5px;"> Male</label>
-                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="gender" value="Female" required style="width: auto; margin-right: 5px;"> Female</label>
-                </div>
-            </div>
-        </div>
-        <label>Adhaar Number (12 Digits)</label>
-        <input type="text" name="adhaar" id="formAdhaar" pattern="^[1-9][0-9]{11}$" maxlength="12" inputmode="numeric" required>
-
-        <!-- PAN Field -->
-        <label>PAN (10 Characters, e.g., ABCDE1234F)</label>
-        <input type="text" name="pan" id="pan" pattern="^[A-Z]{5}[0-9]{4}[A-Z]{1}$" maxlength="10" placeholder="ABCDE1234F" title="Please enter a valid PAN (5 letters, 4 numbers, 1 letter)">
-
-        <h3>2. School & Service Details</h3>
-        <label>School Name</label><input type="text" name="school_name" required>
-        <div class="grid">
-            <div><label>UDISE Code</label><input type="text" name="udise" pattern="^102328[0-9]{5}$" maxlength="11" inputmode="numeric" placeholder="102328*****" required></div>
-            <div><label>Date of Joining</label><input type="date" name="doj" required></div>
-            <div>
-                <label>Teacher Type</label>
-                <select name="teacher_type" required>
-                    <option value="">--Select--</option>
-                    <option>Tre</option><option>Niyojit</option><option>Vishisht</option>
-                    <option>Niymit</option><option>HT</option><option>HM</option><option>Assistant HM / HT</option>
-                </select>
-            </div>
-            <div>
-                <label>Class</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 15px; padding: 10px 0;">
-                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="1 to 5" required style="width: auto; margin-right: 5px;"> 1 to 5</label>
-                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="6 to 8" required style="width: auto; margin-right: 5px;"> 6 to 8</label>
-                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="9 to 10" required style="width: auto; margin-right: 5px;"> 9 to 10</label>
-                    <label style="display: flex; align-items: center; font-weight: normal; margin-top: 0;"><input type="radio" name="class_level" value="11 to 12" required style="width: auto; margin-right: 5px;"> 11 to 12</label>
-                </div>
-            </div>
-        </div>
-        <label>Subject</label><input type="text" name="subject" required>
-
-        <h3>3. Bank Account Details</h3>
-        <div class="grid">
-            <div style="grid-column: span 2;">
-                <label>Account Number (Numbers only)</label>
-                <input type="text" name="account_number" inputmode="numeric" required>
-            </div>
-            <div><label>Bank Name</label><input type="text" name="bank_name" required></div>
-            <div><label>IFSC Code</label><input type="text" name="ifsc" placeholder="e.g., SBIN0001234" required></div>
-        </div>
-
-        <h3>4. Permanent Address Information</h3>
-        <div class="grid">
-            <div><label>Village / Town</label><input type="text" name="village" required></div>
-            <div><label>Panchayat / Municipality</label><input type="text" name="panchayat" required></div>
-            <div><label>Block</label><input type="text" name="block" required></div>
-            <div><label>District</label><input type="text" name="district" required></div>
-            <div><label>State</label><input type="text" name="state" value="Bihar" required></div>
-            <div><label>Pin Code</label><input type="text" name="pincode" pattern="^[1-9][0-9]{5}$" maxlength="6" inputmode="numeric" required></div>
-        </div>
-
-        <button type="submit" id="submitBtn">Submit Data Securely</button>
-    </form>
     
 </div>
 
@@ -151,7 +166,7 @@ button:hover { opacity: 0.9; }
     </div>
 </div>
 
-<!-- NEW: PAN Edit Popup (for quick PAN update from UDISE list) -->
+<!-- PAN Edit Popup (for quick PAN update from UDISE list) -->
 <div id="panPopup" class="popup-overlay">
     <div class="popup-content">
         <h3>Update PAN</h3>

@@ -19,7 +19,7 @@ label { display: block; margin-top: 10px; font-size: 13px; font-weight: bold; }
 input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
 /* Visually transform text inputs to uppercase */
 input[type="text"] { text-transform: uppercase; }
-input[type="text"]::placeholder { text-transform: none; } /* Keep placeholders as is */
+input[type="text"]::placeholder { text-transform: none; }
 .search-box { background: #fff9e6; border: 1px dashed #ffcc00; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
 .search-controls { display: flex; gap: 10px; margin-top: 8px; }
 .search-controls input { flex: 2; }
@@ -83,7 +83,7 @@ button:hover { opacity: 0.9; }
         <label>Adhaar Number (12 Digits)</label>
         <input type="text" name="adhaar" id="formAdhaar" pattern="^[1-9][0-9]{11}$" maxlength="12" inputmode="numeric" required>
 
-        <!-- NEW PAN Field -->
+        <!-- PAN Field -->
         <label>PAN (10 Characters, e.g., ABCDE1234F)</label>
         <input type="text" name="pan" id="pan" pattern="^[A-Z]{5}[0-9]{4}[A-Z]{1}$" maxlength="10" placeholder="ABCDE1234F" title="Please enter a valid PAN (5 letters, 4 numbers, 1 letter)">
 
@@ -142,12 +142,25 @@ button:hover { opacity: 0.9; }
     <div class="loader"></div>
 </div>
 
-<!-- Success Popup -->
+<!-- Success Popup (for full form submission) -->
 <div id="successPopup" class="popup-overlay">
     <div class="popup-content">
         <h3>Success!</h3>
         <p>Data submitted successfully.</p>
         <button id="closePopupBtn">OK</button>
+    </div>
+</div>
+
+<!-- NEW: PAN Edit Popup (for quick PAN update from UDISE list) -->
+<div id="panPopup" class="popup-overlay">
+    <div class="popup-content">
+        <h3>Update PAN</h3>
+        <p style="margin:10px 0;">Enter new PAN for <span id="panTeacherName"></span></p>
+        <input type="text" id="panInput" maxlength="10" style="width:100%; margin-bottom:20px;" placeholder="ABCDE1234F">
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="savePanBtn" style="background:#28a745;">Save</button>
+            <button id="cancelPanBtn" style="background:#dc3545;">Cancel</button>
+        </div>
     </div>
 </div>
 

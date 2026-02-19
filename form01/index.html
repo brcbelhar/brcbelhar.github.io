@@ -54,7 +54,7 @@ button:hover { opacity: 0.9; }
         <div id="statusMessage"></div>
     </div>
 
-    <!-- NEW: Search by UDISE -->
+    <!-- Search by UDISE -->
     <div class="search-box" style="margin-top:20px;">
         <label>Search by UDISE Code to list all teachers:</label>
         <div class="search-controls">
@@ -82,6 +82,10 @@ button:hover { opacity: 0.9; }
         </div>
         <label>Adhaar Number (12 Digits)</label>
         <input type="text" name="adhaar" id="formAdhaar" pattern="^[1-9][0-9]{11}$" maxlength="12" inputmode="numeric" required>
+
+        <!-- NEW PAN Field -->
+        <label>PAN (10 Characters, e.g., ABCDE1234F)</label>
+        <input type="text" name="pan" id="pan" pattern="^[A-Z]{5}[0-9]{4}[A-Z]{1}$" maxlength="10" placeholder="ABCDE1234F" title="Please enter a valid PAN (5 letters, 4 numbers, 1 letter)">
 
         <h3>2. School & Service Details</h3>
         <label>School Name</label><input type="text" name="school_name" required>

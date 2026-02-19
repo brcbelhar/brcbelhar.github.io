@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,6 +44,7 @@ button:hover { opacity: 0.9; }
 <div class="form-card">
     <h2>BRC BELHAR / Teacher Data Management Portal</h2>
     
+    <!-- Search by Aadhaar -->
     <div class="search-box">
         <label>Already submitted? Enter Adhaar to edit your data:</label>
         <div class="search-controls">
@@ -52,6 +52,16 @@ button:hover { opacity: 0.9; }
             <button type="button" onclick="searchData()">Find Record</button>
         </div>
         <div id="statusMessage"></div>
+    </div>
+
+    <!-- NEW: Search by UDISE -->
+    <div class="search-box" style="margin-top:20px;">
+        <label>Search by UDISE Code to list all teachers:</label>
+        <div class="search-controls">
+            <input type="text" id="searchUdise" placeholder="11 Digit UDISE Code (102328...)" maxlength="11" inputmode="numeric">
+            <button type="button" onclick="searchByUDISE()">Search by UDISE</button>
+        </div>
+        <div id="udiseResultList" style="margin-top:15px; max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px; border-radius:4px; background:#fff;"></div>
     </div>
 
     <form id="dataForm">

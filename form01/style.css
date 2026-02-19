@@ -13,3 +13,10 @@ input, select { width: 100%; padding: 10px; border: 1px solid var(--border); bor
 button { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 5px; margin-top: 25px; cursor: pointer; font-weight: bold; }
 button:hover { opacity: 0.9; }
 #statusMessage { text-align: center; margin-top: 15px; font-weight: bold; font-size: 14px; }
+
+/* Toggle visibility */
+.hidden { display: none; }
+
+/* Back button specific */
+#backToSearchBtn { margin-top: 0; margin-bottom: 20px; background: #6c757d; }
+#addNewBtn { background: #28a745; margin-top: 10px; }

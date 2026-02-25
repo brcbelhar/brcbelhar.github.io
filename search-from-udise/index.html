@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Data Management Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="form-card">
+    <h2>BRC BELHAR / Teacher Data Management Portal</h2>
+
+    <form id="searchForm">
+        <label for="udiseInput">Enter UDISE (11‑digit code):</label>
+        <input type="text" id="udiseInput" placeholder="e.g. 12345678901" required>
+        <button type="submit">Search</button>
+    </form>
+    <div id="results"></div>
+</div>
+
+<!-- Loader overlay (hidden by default) -->
+<div class="loader-overlay" id="loaderOverlay">
+    <div class="loader"></div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>

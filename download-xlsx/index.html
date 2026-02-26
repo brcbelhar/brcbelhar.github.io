@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="EN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXPORT DATA PORTAL - BRC BELHAR</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .filter-section {
+            background: #FFF; border: 2px solid #004A99; padding: 15px;
+            border-radius: 8px; margin-bottom: 20px;
+        }
+        .radio-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .radio-item {
+            display: flex; align-items: center; background: #F0F4F8;
+            padding: 8px 15px; border-radius: 20px; border: 1px solid #CED4DA;
+            cursor: pointer; font-size: 13px; font-weight: bold; color: #555;
+            text-transform: uppercase;
+        }
+        .radio-item input { margin-right: 8px; cursor: pointer; }
+        .column-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            background: #F9F9F9; padding: 15px; border-radius: 8px;
+            border: 1px solid #DDD; margin-bottom: 20px;
+        }
+        .col-item { display: flex; align-items: center; font-size: 12px; text-transform: uppercase; }
+        .col-item input { margin-right: 10px; }
+        .select-all-btn {
+            background: #555; padding: 8px 12px; font-size: 11px; margin-bottom: 10px;
+            color: WHITE; border: none; cursor: pointer; border-radius: 4px; text-transform: uppercase;
+        }
+        .special-filter {
+            background: #FFF3CD; border: 2px solid #856404; padding: 10px;
+            border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold;
+        }
+        h2, h3 { text-transform: uppercase; text-align: center; }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-card">
+    <h2>DATA EXPORT CONTROL</h2>
+    
+    <div class="special-filter">
+        <label style="cursor:pointer;">
+            <input type="checkbox" id="splitBlanks"> EXTRACT BLANK ENTRIES TO DIFFERENT SHEET
+        </label>
+    </div>
+
+    <!-- NEW: Custom sort checkbox (replicates the SORT formula) -->
+    <div class="special-filter" style="background: #D4EDDA; border-color: #28A745;">
+        <label style="cursor:pointer;">
+            <input type="checkbox" id="customSort"> APPLY CUSTOM SORT (as per formula)
+        </label>
+    </div>
+
+    <div class="filter-section">
+        <h3>1. SELECT GENDER:</h3>
+        <div class="radio-group">
+            <label class="radio-item"><input type="checkbox" class="gender-cb" value="MALE" checked> MALE</label>
+            <label class="radio-item"><input type="checkbox" class="gender-cb" value="FEMALE" checked> FEMALE</label>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <h3>2. SELECT CLASS LEVEL:</h3>
+        <div class="radio-group">
+            <label class="radio-item"><input type="checkbox" class="class-cb" value="1 TO 5" checked> 1 TO 5</label>
+            <label class="radio-item"><input type="checkbox" class="class-cb" value="6 TO 8" checked> 6 TO 8</label>
+            <label class="radio-item"><input type="checkbox" class="class-cb" value="9 TO 10" checked> 9 TO 10</label>
+            <label class="radio-item"><input type="checkbox" class="class-cb" value="11 TO 12" checked> 11 TO 12</label>
+        </div>
+    </div>
+
+    <h3>3. SELECT COLUMNS FOR EXCEL:</h3>
+    <div style="display:flex; justify-content:center; gap:10px;">
+        <button type="button" class="select-all-btn" onclick="toggleAll(true)">SELECT ALL</button>
+        <button type="button" class="select-all-btn" onclick="toggleAll(false)">CLEAR ALL</button>
+    </div>
+    
+    <div id="columnSelector" class="column-grid"></div>
+
+    <button type="button" id="downloadBtn" style="background: #28A745; color: WHITE; padding: 18px; width: 100%; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 16px;">
+        GENERATE EXCEL FILE
+    </button>
+    
+    <div id="statusMsg" style="text-align:center; margin-top:15px; font-weight:bold; text-transform: uppercase;"></div>
+</div>
+
+<div id="loader" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:RGBA(255,255,255,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div style="border: 8px solid #F3F3F3; border-top: 8px solid #004A99; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
+</div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyUqIzVwEFLHzjGBcgLvVVlr8sZ5id3uEEJr-doim7nLMOpM7vl8rucIybUjr-8FfRT/exec';
+    
+    const COLUMNS = [
+        "TIMESTAMP", "NAME", "FATHER_NAME", "DOB", "ADHAAR", 
+        "MOBILE", "EMAIL", "GENDER", "SCHOOL_NAME", "UDISE", 
+        "TEACHER_TYPE", "CLASS_LEVEL", "SUBJECT", "DOJ", 
+        "ACCOUNT_NUMBER", "BANK_NAME", "IFSC", "VILLAGE", 
+        "PANCHAYAT", "BLOCK", "DISTRICT", "STATE", "PINCODE", "PAN"
+    ];
+
+    // Build column name → index mapping (for maintainability)
+    const COLUMN_INDEX = {};
+    COLUMNS.forEach((name, idx) => { COLUMN_INDEX[name] = idx; });
+
+    const container = document.getElementById('columnSelector');
+    COLUMNS.forEach((col, index) => {
+        container.innerHTML += `<div class="col-item"><input type="checkbox" class="column-cb" id="col_${index}" value="${index}" checked><label for="col_${index}">${col}</label></div>`;
+    });
+
+    function toggleAll(checked) {
+        document.querySelectorAll('.column-cb').forEach(cb => cb.checked = checked);
+    }
+
+    function formatDate(dateInput) {
+        if (!dateInput) return "";
+        let d = new Date(dateInput);
+        if (isNaN(d.getTime())) return dateInput.toString().toUpperCase(); 
+        return d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getFullYear();
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+        const selectedCols = Array.from(document.querySelectorAll('.column-cb:checked')).map(cb => parseInt(cb.value));
+        const selectedClasses = Array.from(document.querySelectorAll('.class-cb:checked')).map(cb => cb.value.toUpperCase());
+        const selectedGenders = Array.from(document.querySelectorAll('.gender-cb:checked')).map(cb => cb.value.toUpperCase());
+        const splitBlanks = document.getElementById('splitBlanks').checked;
+        const applyCustomSort = document.getElementById('customSort').checked;   // new flag
+
+        if (selectedCols.length === 0) {
+            alert("PLEASE SELECT AT LEAST ONE COLUMN.");
+            return;
+        }
+
+        const loader = document.getElementById('loader');
+        const status = document.getElementById('statusMsg');
+        loader.style.display = 'flex';
+        status.innerText = "FETCHING DATA...";
+
+        fetch(`${scriptURL}?action=searchByName&name= `)
+            .then(res => res.json())
+            .then(data => {
+                loader.style.display = 'none';
+                if (data.result === "found") {
+                    // Filter by gender and class (original filters)
+                    let filteredRows = data.rows.filter(row => {
+                        const gMatch = selectedGenders.includes((row[COLUMN_INDEX["GENDER"]] || "").toString().toUpperCase().trim());
+                        const cMatch = selectedClasses.includes((row[COLUMN_INDEX["CLASS_LEVEL"]] || "").toString().toUpperCase().trim());
+                        return gMatch && cMatch;
+                    });
+
+                    // ----- CUSTOM SORT (if checkbox is checked) -----
+                    if (applyCustomSort) {
+                        filteredRows.sort((a, b) => {
+                            // Helper to get normalized value
+                            const get = (row, colName) => (row[COLUMN_INDEX[colName]] || "").toString().toUpperCase().trim();
+
+                            // 1. Gender descending
+                            const genderA = get(a, "GENDER");
+                            const genderB = get(b, "GENDER");
+                            if (genderA > genderB) return -1;
+                            if (genderA < genderB) return 1;
+
+                            // 2. State = "BIHAR" flag descending
+                            const stateIsBIHAR_A = get(a, "STATE") === "BIHAR";
+                            const stateIsBIHAR_B = get(b, "STATE") === "BIHAR";
+                            if (stateIsBIHAR_A && !stateIsBIHAR_B) return -1;
+                            if (!stateIsBIHAR_A && stateIsBIHAR_B) return 1;
+
+                            // 3. State ascending
+                            const stateA = get(a, "STATE");
+                            const stateB = get(b, "STATE");
+                            if (stateA < stateB) return -1;
+                            if (stateA > stateB) return 1;
+
+                            // 4. District = "BANKA" flag descending
+                            const districtIsBANKA_A = get(a, "DISTRICT") === "BANKA";
+                            const districtIsBANKA_B = get(b, "DISTRICT") === "BANKA";
+                            if (districtIsBANKA_A && !districtIsBANKA_B) return -1;
+                            if (!districtIsBANKA_A && districtIsBANKA_B) return 1;
+
+                            // 5. District ascending
+                            const districtA = get(a, "DISTRICT");
+                            const districtB = get(b, "DISTRICT");
+                            if (districtA < districtB) return -1;
+                            if (districtA > districtB) return 1;
+
+                            // 6. Block = "BELHAR" flag descending
+                            const blockIsBELHAR_A = get(a, "BLOCK") === "BELHAR";
+                            const blockIsBELHAR_B = get(b, "BLOCK") === "BELHAR";
+                            if (blockIsBELHAR_A && !blockIsBELHAR_B) return -1;
+                            if (!blockIsBELHAR_A && blockIsBELHAR_B) return 1;
+
+                            // 7. Block ascending
+                            const blockA = get(a, "BLOCK");
+                            const blockB = get(b, "BLOCK");
+                            if (blockA < blockB) return -1;
+                            if (blockA > blockB) return 1;
+
+                            // 8. Panchayat = "BELHAR" flag descending
+                            const panchayatIsBELHAR_A = get(a, "PANCHAYAT") === "BELHAR";
+                            const panchayatIsBELHAR_B = get(b, "PANCHAYAT") === "BELHAR";
+                            if (panchayatIsBELHAR_A && !panchayatIsBELHAR_B) return -1;
+                            if (!panchayatIsBELHAR_A && panchayatIsBELHAR_B) return 1;
+
+                            // 9. Panchayat ascending
+                            const panchayatA = get(a, "PANCHAYAT");
+                            const panchayatB = get(b, "PANCHAYAT");
+                            if (panchayatA < panchayatB) return -1;
+                            if (panchayatA > panchayatB) return 1;
+
+                            return 0;
+                        });
+                    }
+
+                    if (filteredRows.length > 0) {
+                        generateExcel(filteredRows, selectedCols, splitBlanks);
+                        status.innerText = `DOWNLOADED ${filteredRows.length} RECORDS`;
+                        status.style.color = "GREEN";
+                    } else {
+                        status.innerText = "NO MATCHING DATA FOUND";
+                        status.style.color = "RED";
+                    }
+                } else {
+                    status.innerText = "NO DATA OR INVALID RESPONSE";
+                    status.style.color = "ORANGE";
+                }
+            })
+            .catch(error => { 
+                loader.style.display = 'none'; 
+                status.innerText = "ERROR CONNECTING";
+                status.style.color = "RED";
+                console.error(error);
+            });
+    });
+
+    function generateExcel(rows, indices, splitBlanks) {
+        // Reorder columns if both ADHAAR and PAN are selected (PAN after ADHAAR)
+        const panIdx = COLUMN_INDEX["PAN"];
+        const adhaarIdx = COLUMN_INDEX["ADHAAR"];
+        let finalIndices = [...indices];
+
+        if (indices.includes(panIdx) && indices.includes(adhaarIdx)) {
+            finalIndices = finalIndices.filter(i => i !== panIdx);
+            finalIndices.splice(finalIndices.indexOf(adhaarIdx) + 1, 0, panIdx);
+        }
+
+        let headerRow = ["S.NO", ...finalIndices.map(i => COLUMNS[i])];
+        let mainData = [], blankData = [];
+
+        rows.forEach((row, idx) => {
+            let rowArr = [0]; // placeholder for S.NO
+            let hasBlank = false;
+
+            finalIndices.forEach(i => {
+                let val = row[i];
+                if (i === COLUMN_INDEX["DOB"] || i === COLUMN_INDEX["DOJ"]) {
+                    val = formatDate(val);
+                } else {
+                    val = val ? val.toString().toUpperCase().trim() : "";
+                }
+                
+                if (val === "") hasBlank = true;
+                rowArr.push(val);
+            });
+
+            if (splitBlanks && hasBlank) {
+                blankData.push(rowArr);
+            } else {
+                mainData.push(rowArr);
+            }
+        });
+
+        // Assign serial numbers
+        mainData.forEach((r, i) => r[0] = i + 1);
+        blankData.forEach((r, i) => r[0] = i + 1);
+
+        const wb = XLSX.utils.book_new();
+        
+        // Sheet 1: Complete records
+        const ws1 = XLSX.utils.aoa_to_sheet([headerRow, ...mainData]);
+        XLSX.utils.book_append_sheet(wb, ws1, "TEACHERS_DATA");
+
+        // Sheet 2: Incomplete records (if enabled and any exist)
+        if (splitBlanks && blankData.length > 0) {
+            const ws2 = XLSX.utils.aoa_to_sheet([headerRow, ...blankData]);
+            XLSX.utils.book_append_sheet(wb, ws2, "INCOMPLETE_RECORDS");
+        }
+
+        XLSX.writeFile(wb, "BRC_BELHAR_TEACHER_DATA.XLSX");
+    }
+</script>
+
+</body>
+</html>

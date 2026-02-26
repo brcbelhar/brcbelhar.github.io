@@ -35,10 +35,6 @@
             border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold;
         }
         h2, h3 { text-transform: uppercase; text-align: center; }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -49,13 +45,6 @@
     <div class="special-filter">
         <label style="cursor:pointer;">
             <input type="checkbox" id="splitBlanks"> EXTRACT BLANK ENTRIES TO DIFFERENT SHEET
-        </label>
-    </div>
-
-    <!-- NEW: Custom sort checkbox (replicates the SORT formula) -->
-    <div class="special-filter" style="background: #D4EDDA; border-color: #28A745;">
-        <label style="cursor:pointer;">
-            <input type="checkbox" id="customSort"> APPLY CUSTOM SORT (as per formula)
         </label>
     </div>
 
@@ -107,10 +96,6 @@
         "PANCHAYAT", "BLOCK", "DISTRICT", "STATE", "PINCODE", "PAN"
     ];
 
-    // Build column name → index mapping (for maintainability)
-    const COLUMN_INDEX = {};
-    COLUMNS.forEach((name, idx) => { COLUMN_INDEX[name] = idx; });
-
     const container = document.getElementById('columnSelector');
     COLUMNS.forEach((col, index) => {
         container.innerHTML += `<div class="col-item"><input type="checkbox" class="column-cb" id="col_${index}" value="${index}" checked><label for="col_${index}">${col}</label></div>`;
@@ -132,7 +117,6 @@
         const selectedClasses = Array.from(document.querySelectorAll('.class-cb:checked')).map(cb => cb.value.toUpperCase());
         const selectedGenders = Array.from(document.querySelectorAll('.gender-cb:checked')).map(cb => cb.value.toUpperCase());
         const splitBlanks = document.getElementById('splitBlanks').checked;
-        const applyCustomSort = document.getElementById('customSort').checked;   // new flag
 
         if (selectedCols.length === 0) {
             alert("PLEASE SELECT AT LEAST ONE COLUMN.");
@@ -149,77 +133,12 @@
             .then(data => {
                 loader.style.display = 'none';
                 if (data.result === "found") {
-                    // Filter by gender and class (original filters)
-                    let filteredRows = data.rows.filter(row => {
-                        const gMatch = selectedGenders.includes((row[COLUMN_INDEX["GENDER"]] || "").toString().toUpperCase().trim());
-                        const cMatch = selectedClasses.includes((row[COLUMN_INDEX["CLASS_LEVEL"]] || "").toString().toUpperCase().trim());
+                    const filteredRows = data.rows.filter(row => {
+                        const gMatch = selectedGenders.includes((row[7] || "").toString().toUpperCase().trim());
+                        const cMatch = selectedClasses.includes((row[11] || "").toString().toUpperCase().trim());
                         return gMatch && cMatch;
                     });
-
-                    // ----- CUSTOM SORT (if checkbox is checked) -----
-                    if (applyCustomSort) {
-                        filteredRows.sort((a, b) => {
-                            // Helper to get normalized value
-                            const get = (row, colName) => (row[COLUMN_INDEX[colName]] || "").toString().toUpperCase().trim();
-
-                            // 1. Gender descending
-                            const genderA = get(a, "GENDER");
-                            const genderB = get(b, "GENDER");
-                            if (genderA > genderB) return -1;
-                            if (genderA < genderB) return 1;
-
-                            // 2. State = "BIHAR" flag descending
-                            const stateIsBIHAR_A = get(a, "STATE") === "BIHAR";
-                            const stateIsBIHAR_B = get(b, "STATE") === "BIHAR";
-                            if (stateIsBIHAR_A && !stateIsBIHAR_B) return -1;
-                            if (!stateIsBIHAR_A && stateIsBIHAR_B) return 1;
-
-                            // 3. State ascending
-                            const stateA = get(a, "STATE");
-                            const stateB = get(b, "STATE");
-                            if (stateA < stateB) return -1;
-                            if (stateA > stateB) return 1;
-
-                            // 4. District = "BANKA" flag descending
-                            const districtIsBANKA_A = get(a, "DISTRICT") === "BANKA";
-                            const districtIsBANKA_B = get(b, "DISTRICT") === "BANKA";
-                            if (districtIsBANKA_A && !districtIsBANKA_B) return -1;
-                            if (!districtIsBANKA_A && districtIsBANKA_B) return 1;
-
-                            // 5. District ascending
-                            const districtA = get(a, "DISTRICT");
-                            const districtB = get(b, "DISTRICT");
-                            if (districtA < districtB) return -1;
-                            if (districtA > districtB) return 1;
-
-                            // 6. Block = "BELHAR" flag descending
-                            const blockIsBELHAR_A = get(a, "BLOCK") === "BELHAR";
-                            const blockIsBELHAR_B = get(b, "BLOCK") === "BELHAR";
-                            if (blockIsBELHAR_A && !blockIsBELHAR_B) return -1;
-                            if (!blockIsBELHAR_A && blockIsBELHAR_B) return 1;
-
-                            // 7. Block ascending
-                            const blockA = get(a, "BLOCK");
-                            const blockB = get(b, "BLOCK");
-                            if (blockA < blockB) return -1;
-                            if (blockA > blockB) return 1;
-
-                            // 8. Panchayat = "BELHAR" flag descending
-                            const panchayatIsBELHAR_A = get(a, "PANCHAYAT") === "BELHAR";
-                            const panchayatIsBELHAR_B = get(b, "PANCHAYAT") === "BELHAR";
-                            if (panchayatIsBELHAR_A && !panchayatIsBELHAR_B) return -1;
-                            if (!panchayatIsBELHAR_A && panchayatIsBELHAR_B) return 1;
-
-                            // 9. Panchayat ascending
-                            const panchayatA = get(a, "PANCHAYAT");
-                            const panchayatB = get(b, "PANCHAYAT");
-                            if (panchayatA < panchayatB) return -1;
-                            if (panchayatA > panchayatB) return 1;
-
-                            return 0;
-                        });
-                    }
-
+                    
                     if (filteredRows.length > 0) {
                         generateExcel(filteredRows, selectedCols, splitBlanks);
                         status.innerText = `DOWNLOADED ${filteredRows.length} RECORDS`;
@@ -228,23 +147,16 @@
                         status.innerText = "NO MATCHING DATA FOUND";
                         status.style.color = "RED";
                     }
-                } else {
-                    status.innerText = "NO DATA OR INVALID RESPONSE";
-                    status.style.color = "ORANGE";
                 }
             })
-            .catch(error => { 
+            .catch(() => { 
                 loader.style.display = 'none'; 
-                status.innerText = "ERROR CONNECTING";
-                status.style.color = "RED";
-                console.error(error);
+                status.innerText = "ERROR CONNECTING"; 
             });
     });
 
     function generateExcel(rows, indices, splitBlanks) {
-        // Reorder columns if both ADHAAR and PAN are selected (PAN after ADHAAR)
-        const panIdx = COLUMN_INDEX["PAN"];
-        const adhaarIdx = COLUMN_INDEX["ADHAAR"];
+        const panIdx = 23, adhaarIdx = 4;
         let finalIndices = [...indices];
 
         if (indices.includes(panIdx) && indices.includes(adhaarIdx)) {
@@ -256,39 +168,33 @@
         let mainData = [], blankData = [];
 
         rows.forEach((row, idx) => {
-            let rowArr = [0]; // placeholder for S.NO
+            let rowArr = [0]; // PLACEHOLDER FOR S.NO
             let hasBlank = false;
 
             finalIndices.forEach(i => {
                 let val = row[i];
-                if (i === COLUMN_INDEX["DOB"] || i === COLUMN_INDEX["DOJ"]) {
-                    val = formatDate(val);
-                } else {
-                    val = val ? val.toString().toUpperCase().trim() : "";
-                }
+                if (i === 3 || i === 13) val = formatDate(val);
+                else val = val ? val.toString().toUpperCase().trim() : "";
                 
                 if (val === "") hasBlank = true;
                 rowArr.push(val);
             });
 
-            if (splitBlanks && hasBlank) {
-                blankData.push(rowArr);
-            } else {
-                mainData.push(rowArr);
-            }
+            if (splitBlanks && hasBlank) blankData.push(rowArr);
+            else mainData.push(rowArr);
         });
 
-        // Assign serial numbers
+        // RE-ASSIGN SERIAL NUMBERS
         mainData.forEach((r, i) => r[0] = i + 1);
         blankData.forEach((r, i) => r[0] = i + 1);
 
         const wb = XLSX.utils.book_new();
         
-        // Sheet 1: Complete records
+        // SHEET 1: COMPLETE RECORDS
         const ws1 = XLSX.utils.aoa_to_sheet([headerRow, ...mainData]);
         XLSX.utils.book_append_sheet(wb, ws1, "TEACHERS_DATA");
 
-        // Sheet 2: Incomplete records (if enabled and any exist)
+        // SHEET 2: INCOMPLETE RECORDS (IF ENABLED)
         if (splitBlanks && blankData.length > 0) {
             const ws2 = XLSX.utils.aoa_to_sheet([headerRow, ...blankData]);
             XLSX.utils.book_append_sheet(wb, ws2, "INCOMPLETE_RECORDS");

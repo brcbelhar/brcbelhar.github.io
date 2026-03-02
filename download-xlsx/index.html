@@ -39,6 +39,26 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Date range styling */
+        .date-range {
+            display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .date-range input {
+            padding: 8px; border: 1px solid #CED4DA; border-radius: 5px;
+            font-family: inherit; font-size: 14px;
+        }
+        /* Button container */
+        .button-container {
+            display: flex; gap: 10px; margin-bottom: 20px;
+        }
+        .button-container button {
+            flex: 1; padding: 18px; border: none; border-radius: 5px;
+            cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 16px;
+            color: WHITE;
+        }
+        #countBtn { background: #17A2B8; }
+        #downloadBtn { background: #28A745; }
     </style>
 </head>
 <body>
@@ -77,7 +97,28 @@
         </div>
     </div>
 
-    <h3>3. SELECT COLUMNS FOR EXCEL:</h3>
+    <!-- NEW: Exclude Teacher Type filter -->
+    <div class="filter-section">
+        <h3>3. EXCLUDE TEACHER TYPES:</h3>
+        <div class="radio-group">
+            <label class="radio-item"><input type="checkbox" class="teacher-type-exclude-cb" value="ASSISTANT HM / HT"> EXCLUDE ASSISTANT HM / HT</label>
+            <label class="radio-item"><input type="checkbox" class="teacher-type-exclude-cb" value="HM"> EXCLUDE HM</label>
+            <label class="radio-item"><input type="checkbox" class="teacher-type-exclude-cb" value="HT"> EXCLUDE HT</label>
+        </div>
+    </div>
+
+    <!-- NEW: Date range filter -->
+    <div class="filter-section">
+        <h3>4. SELECT DATE RANGE (BY TIMESTAMP):</h3>
+        <div class="date-range">
+            <input type="date" id="dateFrom" placeholder="FROM">
+            <span style="align-self:center;">TO</span>
+            <input type="date" id="dateTo" placeholder="TO">
+        </div>
+        <p style="font-size:12px; color:#666; margin-top:8px;">Leave both empty to ignore date filter.</p>
+    </div>
+
+    <h3>5. SELECT COLUMNS FOR EXCEL:</h3>
     <div style="display:flex; justify-content:center; gap:10px;">
         <button type="button" class="select-all-btn" onclick="toggleAll(true)">SELECT ALL</button>
         <button type="button" class="select-all-btn" onclick="toggleAll(false)">CLEAR ALL</button>
@@ -85,9 +126,11 @@
     
     <div id="columnSelector" class="column-grid"></div>
 
-    <button type="button" id="downloadBtn" style="background: #28A745; color: WHITE; padding: 18px; width: 100%; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 16px;">
-        GENERATE EXCEL FILE
-    </button>
+    <!-- Button container with COUNT and GENERATE buttons -->
+    <div class="button-container">
+        <button type="button" id="countBtn">COUNT RECORDS</button>
+        <button type="button" id="downloadBtn">GENERATE EXCEL FILE</button>
+    </div>
     
     <div id="statusMsg" style="text-align:center; margin-top:15px; font-weight:bold; text-transform: uppercase;"></div>
 </div>
@@ -127,13 +170,102 @@
         return d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getFullYear();
     }
 
-    document.getElementById('downloadBtn').addEventListener('click', function() {
-        const selectedCols = Array.from(document.querySelectorAll('.column-cb:checked')).map(cb => parseInt(cb.value));
+    // Helper to parse timestamp from various formats into a comparable YYYY-MM-DD string
+    function parseTimestampToDateStr(timestamp) {
+        if (!timestamp) return '';
+        // If it's already a string, clean it
+        const ts = timestamp.toString().trim();
+        // Try to create Date object directly
+        let d = new Date(ts);
+        if (!isNaN(d.getTime())) {
+            // Valid date – extract YYYY-MM-DD
+            return d.toISOString().split('T')[0];
+        }
+        // Try common format: DD/MM/YYYY HH:MM:SS (or just DD/MM/YYYY)
+        const parts = ts.split(' ');
+        const datePart = parts[0];
+        if (datePart.includes('/')) {
+            const dmy = datePart.split('/');
+            if (dmy.length === 3) {
+                // Assume DD/MM/YYYY
+                const [day, month, year] = dmy;
+                // Pad if needed
+                const y = year.length === 2 ? '20' + year : year;
+                return `${y}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
+            }
+        }
+        // Fallback: return original string (filter will likely exclude it)
+        return ts;
+    }
+
+    // Function to filter rows based on current selections (gender, class, date range)
+    function getFilteredRows(data) {
         const selectedClasses = Array.from(document.querySelectorAll('.class-cb:checked')).map(cb => cb.value.toUpperCase());
         const selectedGenders = Array.from(document.querySelectorAll('.gender-cb:checked')).map(cb => cb.value.toUpperCase());
-        const splitBlanks = document.getElementById('splitBlanks').checked;
-        const applyCustomSort = document.getElementById('customSort').checked;   // new flag
+        const excludedTeacherTypes = Array.from(document.querySelectorAll('.teacher-type-exclude-cb:checked')).map(cb => cb.value.toUpperCase());
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
 
+        return data.rows.filter(row => {
+            // Gender filter
+            const genderVal = (row[COLUMN_INDEX["GENDER"]] || "").toString().toUpperCase().trim();
+            if (!selectedGenders.includes(genderVal)) return false;
+
+            // Class filter
+            const classVal = (row[COLUMN_INDEX["CLASS_LEVEL"]] || "").toString().toUpperCase().trim();
+            if (!selectedClasses.includes(classVal)) return false;
+
+            // Teacher Type exclusion filter
+            const teacherTypeVal = (row[COLUMN_INDEX["TEACHER_TYPE"]] || "").toString().toUpperCase().trim();
+            if (excludedTeacherTypes.includes(teacherTypeVal)) return false;
+
+            // Date range filter
+            if (dateFrom || dateTo) {
+                const timestampRaw = row[COLUMN_INDEX["TIMESTAMP"]] || "";
+                const dateStr = parseTimestampToDateStr(timestampRaw);
+                if (!dateStr) return false;
+                if (dateFrom && dateStr < dateFrom) return false;
+                if (dateTo && dateStr > dateTo) return false;
+            }
+
+            return true;
+        });
+    }
+
+    // COUNT button click
+    document.getElementById('countBtn').addEventListener('click', function() {
+        const loader = document.getElementById('loader');
+        const status = document.getElementById('statusMsg');
+        loader.style.display = 'flex';
+        status.innerText = "COUNTING...";
+
+        fetch(`${scriptURL}?action=searchByName&name= `)
+            .then(res => res.json())
+            .then(data => {
+                loader.style.display = 'none';
+                if (data.result === "found") {
+                    const filteredRows = getFilteredRows(data);
+                    status.innerText = `TOTAL MATCHING RECORDS: ${filteredRows.length}`;
+                    status.style.color = "BLUE";
+                } else {
+                    status.innerText = "NO DATA OR INVALID RESPONSE";
+                    status.style.color = "ORANGE";
+                }
+            })
+            .catch(error => {
+                loader.style.display = 'none';
+                status.innerText = "ERROR CONNECTING";
+                status.style.color = "RED";
+                console.error(error);
+            });
+    });
+
+    // DOWNLOAD button click
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+        const selectedCols = Array.from(document.querySelectorAll('.column-cb:checked')).map(cb => parseInt(cb.value));
+        const splitBlanks = document.getElementById('splitBlanks').checked;
+        const applyCustomSort = document.getElementById('customSort').checked;
+        
         if (selectedCols.length === 0) {
             alert("PLEASE SELECT AT LEAST ONE COLUMN.");
             return;
@@ -149,15 +281,10 @@
             .then(data => {
                 loader.style.display = 'none';
                 if (data.result === "found") {
-                    // Filter by gender and class (original filters)
-                    let filteredRows = data.rows.filter(row => {
-                        const gMatch = selectedGenders.includes((row[COLUMN_INDEX["GENDER"]] || "").toString().toUpperCase().trim());
-                        const cMatch = selectedClasses.includes((row[COLUMN_INDEX["CLASS_LEVEL"]] || "").toString().toUpperCase().trim());
-                        return gMatch && cMatch;
-                    });
+                    let filteredRows = getFilteredRows(data);
 
-                    // ----- CUSTOM SORT (if checkbox is checked) -----
-                    if (applyCustomSort) {
+                    // Apply custom sort if enabled
+                    if (applyCustomSort && filteredRows.length > 0) {
                         filteredRows.sort((a, b) => {
                             // Helper to get normalized value
                             const get = (row, colName) => (row[COLUMN_INDEX[colName]] || "").toString().toUpperCase().trim();

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearest School Finder</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 650px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            color: #0f172a;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 15px;
+            font-style: italic;
+            color: #64748b;
+        }
+
+        .result-card {
+            display: none;
+            margin-top: 25px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f1f5f9;
+        }
+
+        .school-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 10px;
+        }
+
+        .details p {
+            margin: 6px 0;
+            font-size: 14px;
+        }
+
+        .map-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 18px;
+            background-color: #10b981;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .map-btn:hover {
+            background-color: #059669;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Find Nearest School</h1>
+    <button class="btn" onclick="findNearestSchool()">📍 Locate Nearest School</button>
+    <div id="status">Click the button above to get your nearest school.</div>
+
+    <div id="resultCard" class="result-card">
+        <div class="school-name" id="schoolName"></div>
+        <div class="details">
+            <p><strong>UDISE Code:</strong> <span id="udiseCode"></span></p>
+            <p><strong>Distance:</strong> <span id="distance"></span> km away</p>
+        </div>
+        <a id="mapLink" href="#" target="_blank" class="map-btn">🧭 Open Route in Google Maps</a>
+    </div>
+</div>
+
+<script>
+    // Data parsed from image without the 'code' property
+    const schoolsData = [
+        { name: "HIGH SCHOOL SAHEBGANJ", udise: "10232815403", lat: 24.9144905, lng: 86.9243 },
+        { name: "RAJPUR HIGH SCHOOL RAJPUR", udise: "10232805705", lat: 24.96045, lng: 86.9243 },
+        { name: "S.N.J.N HS BELHAR", udise: "10232801105", lat: 24.9186369, lng: 86.9243 },
+        { name: "UCCHATAR MADHYAMIC VIDYALAY, CHIRAIYA", udise: "10232809101", lat: 24.95764, lng: 86.9243 },
+        { name: "UCHCHA MADHAMIK VIDYALAY, RANGA", udise: "10232810602", lat: 24.9363314, lng: 86.9243 },
+        { name: "UCHCHA MADHAMIK VIDYALAY, TARAIYA", udise: "10232804306", lat: 24.901837, lng: 86.9243 },
+        { name: "UCHCHA MADHAYMIK VIDYALAY DHOURI", udise: "10232807702", lat: 24.95626, lng: 86.9243 },
+        { name: "UCHCHA MADHAYMIK VIDYALAY GHORBAHIYAR", udise: "10232814006", lat: 24.901218, lng: 86.9243 },
+        { name: "UCHCHA MADHAYMIK VIDYALAY RAGHUNATHPUR", udise: "10232821102", lat: 24.9111043, lng: 86.9243 },
+        { name: "UCHCHA MADHALYIK VIDYALAY DUMARIYA", udise: "10232805002", lat: 24.9486713, lng: 86.9243 },
+        { name: "UCHCHA MADHALYIK VIDYALAY NIMIYA", udise: "10232823802", lat: 24.9515778, lng: 86.9243 },
+        { name: "UCHHATAR MADHYAMIC VIDYALAY TENGRA", udise: "10232828301", lat: 24.891585, lng: 86.9243 },
+        { name: "UCHHATAR MADHYAMIC VIDYALAYHATHIYA DARHA", udise: "10232821902", lat: 24.94046, lng: 86.9243 },
+        { name: "UHS BELA BIJHARA", udise: "10232817302", lat: 24.832318, lng: 86.9243 },
+        { name: "UHS BOUKA", udise: "10232813401", lat: 24.911756, lng: 86.9243 },
+        { name: "UHS DARSHANIYA", udise: "10232812802", lat: 24.8845317, lng: 86.9243 },
+        { name: "UHS NAGEL", udise: "10232818402", lat: 24.971757, lng: 86.9243 },
+        { name: "UTKARMIT MADHYAMIC VIDYALAY SRINAGAR", udise: "10232823301", lat: 24.931129, lng: 86.9243 }
+    ];
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    function findNearestSchool() {
+        const statusEl = document.getElementById('status');
+        const cardEl = document.getElementById('resultCard');
+
+        if (!navigator.geolocation) {
+            statusEl.textContent = "Geolocation is not supported by your browser.";
+            return;
+        }
+
+        statusEl.textContent = "Acquiring your location...";
+        cardEl.style.display = "none";
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+
+                let nearestSchool = null;
+                let minDistance = Infinity;
+
+                schoolsData.forEach(school => {
+                    const dist = calculateDistance(userLat, userLng, school.lat, school.lng);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        nearestSchool = school;
+                    }
+                });
+
+                document.getElementById('schoolName').textContent = nearestSchool.name;
+                document.getElementById('udiseCode').textContent = nearestSchool.udise;
+                document.getElementById('distance').textContent = minDistance.toFixed(2);
+
+                const mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${nearestSchool.lat},${nearestSchool.lng}&travelmode=driving`;
+                document.getElementById('mapLink').href = mapUrl;
+
+                statusEl.textContent = "Nearest school found!";
+                cardEl.style.display = "block";
+            },
+            (error) => {
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        statusEl.textContent = "Location permission denied. Please allow location access.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        statusEl.textContent = "Location information is unavailable.";
+                        break;
+                    case error.TIMEOUT:
+                        statusEl.textContent = "Location request timed out.";
+                        break;
+                    default:
+                        statusEl.textContent = "An unknown error occurred.";
+                        break;
+                }
+            }
+        );
+    }
+</script>
+
+</body>
+</html>
